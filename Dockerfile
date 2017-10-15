@@ -52,7 +52,7 @@ RUN wget http://releases.ansible.com/awx/setup/ansible-tower-setup-${ANSIBLE_TOW
 COPY tower_setup_conf.yml /opt/tower-setup/ansible-tower-setup-${ANSIBLE_TOWER_VER}/tower_setup_conf.yml
 COPY files/inventory /opt/tower-setup/ansible-tower-setup-${ANSIBLE_TOWER_VER}/inventory
 
-# Install Tower.
+# Install Tower
 RUN ${ANSIBLE_SETUP_SCRIPT}
 
 # Add required files so tower is properly configured (needs to be done AFTER installation)
@@ -64,7 +64,7 @@ COPY files/license /etc/tower/license
 RUN chmod +x /docker-entrypoint.sh \
   && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 80 443 8080 445
+EXPOSE 443
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 CMD ["ansible-tower"]
