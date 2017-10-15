@@ -23,7 +23,7 @@ node {
     }
 
     stage("build") {
-      timeout(30) {
+      timeout(50) {
         sh "docker login -u='$DOCKER_USERNAME' -p='$DOCKER_PASSWORD'"
         sh "docker build --pull -t '$IMAGE_TAG:$BUILD_NUMBER' ."
       }
