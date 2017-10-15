@@ -52,8 +52,7 @@ RUN wget http://releases.ansible.com/awx/setup/ansible-tower-setup-${ANSIBLE_TOW
 COPY tower_setup_conf.yml /opt/tower-setup/ansible-tower-setup-${ANSIBLE_TOWER_VER}/tower_setup_conf.yml
 COPY files/inventory /opt/tower-setup/ansible-tower-setup-${ANSIBLE_TOWER_VER}/inventory
 
-# Remove sudo from the ansible setup script as ubuntu 16 does not have it
-# (plus we are already running as root), then Install Tower.
+# Install Tower.
 RUN ${ANSIBLE_SETUP_SCRIPT}
 
 # Add required files so tower is properly configured (needs to be done AFTER installation)
@@ -65,7 +64,7 @@ COPY files/license /etc/tower/license
 RUN chmod +x /docker-entrypoint.sh \
   && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 443 8080
+EXPOSE 80 443 8080 445
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 CMD ["ansible-tower"]
