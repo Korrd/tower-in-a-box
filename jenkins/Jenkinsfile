@@ -1,0 +1,76 @@
+node {
+
+  try {
+
+    checkout scm
+
+    stage("variables setup") {
+
+      env.VERSION = "3.2.1"
+      env.IMAGE_TAG = "korrd2/tower-in-a-box"
+      env.REPO = "tower-in-a-box"
+      env.TOWER_LICENSE_FILE = "license"
+
+      withCredentials([usernamePassword(credentialsId: 'DOCKER', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+        env.DOCKER_USERNAME = "$DOCKER_USERNAME"
+        env.DOCKER_PASSWORD = "$DOCKER_PASSWORD"
+      }
+
+      withCredentials([[$class: 'FileBinding', credentialsId: 'ANSIBLE_TOWER_LICENSE', variable: 'TOWER_LICENSE']]) {
+        sh "cat $TOWER_LICENSE > files/$TOWER_LICENSE_FILE"
+      }
+
+    }
+
+    stage("build") {
+      timeout(50) {
+        sh "docker login -u='$DOCKER_USERNAME' -p='$DOCKER_PASSWORD'"
+        sh "docker build --pull -t '$IMAGE_TAG:$BUILD_NUMBER' ."
+      }
+    }
+
+    stage("push") {
+
+      if (env.BRANCH_NAME == "master") {
+        timeout(10) {
+          sh "docker tag '$IMAGE_TAG:$BUILD_NUMBER' '$IMAGE_TAG:latest'"
+          sh "docker push '$IMAGE_TAG:latest'"
+
+          sh "docker tag '$IMAGE_TAG:$BUILD_NUMBER' '$IMAGE_TAG:$VERSION'"
+          sh "docker push '$IMAGE_TAG:$VERSION'"
+        }
+      } else {
+
+        def SANITIZED_BRANCH_NAME = "${sanitizedBranchName(BRANCH_NAME)}"
+
+        timeout(10) {
+          sh "docker tag '$IMAGE_TAG:$BUILD_NUMBER' '$IMAGE_TAG:$SANITIZED_BRANCH_NAME'"
+          sh "docker push '$IMAGE_TAG:$SANITIZED_BRANCH_NAME'"
+        }
+      }
+
+    }
+
+    slackSend color: 'good', message: "Branch `$BRANCH_NAME` from repo `$REPO` has built successfully"
+
+  } catch (err) {
+
+    sh "echo $err"
+    currentBuild.result = 'FAILURE'
+
+    slackSend color: 'bad', message: "*$currentBuild.result*: Branch `$BRANCH_NAME` from repo `$REPO` has failed to build \n - *Link* \n ${BUILD_URL}console \n - *Error Message* ```$err```"
+
+  } finally {
+
+    /* Clean up workspace */
+    deleteDir()
+
+  }
+
+}
+
+def sanitizedBranchName(branchName) {
+  // Remove the verb from the branch (add/...)
+  // and replace all dots with dashes
+  "${branchName.split('/')[1].replaceAll('\\.', '-')}"
+}
