@@ -67,4 +67,6 @@ RUN chmod +x /docker-entrypoint.sh \
 EXPOSE 443
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
+VOLUME "/var/lib/postgresql/9.6/main"
+
 CMD ["ansible-tower"]
