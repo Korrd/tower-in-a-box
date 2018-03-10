@@ -38,7 +38,7 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 382E94DE \
   && apt-get update \
   && apt-get install -y datadog-agent \
   && easy_install pip \
-  && pip install ansible==2.3 certifi==2015.04.28 \
+  && pip install ansible==2.4.3.0 certifi==2015.04.28 \
   && pip install datadog
 
 # Download [and extract] Tower
