@@ -1,72 +1,65 @@
 node {
 
-  try {
+  timeout(BUILD_TIMEOUT.toInteger()) {
 
-    checkout scm
+    try {
 
-    stage("variables setup") {
+      checkout scm
 
-      env.VERSION = "3.2.3-ansible2.4.3.0"
-      env.IMAGE_TAG = "korrd2/tower-in-a-box"
-      env.REPO = "tower-in-a-box"
-      env.TOWER_LICENSE_FILE = "license"
+      stage("variables setup") {
 
-      withCredentials([usernamePassword(credentialsId: 'DOCKER', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-        env.DOCKER_USERNAME = "$DOCKER_USERNAME"
-        env.DOCKER_PASSWORD = "$DOCKER_PASSWORD"
+        env.VERSION = "3.2.3-ansible2.4.3.0"
+        env.IMAGE_TAG = "korrd2/tower-in-a-box"
+        env.REPO = "tower-in-a-box"
+        env.TOWER_LICENSE_FILE = "license"
+
+        withCredentials([[$class: 'FileBinding', credentialsId: 'ANSIBLE_TOWER_LICENSE', variable: 'TOWER_LICENSE']]) {
+          sh "cat $TOWER_LICENSE > files/$TOWER_LICENSE_FILE"
+        }
+
+        withCredentials([usernamePassword(credentialsId: 'DOCKER', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+          sh "docker login -u='$DOCKER_USERNAME' -p='$DOCKER_PASSWORD'"
+        }
+
       }
 
-      withCredentials([[$class: 'FileBinding', credentialsId: 'ANSIBLE_TOWER_LICENSE', variable: 'TOWER_LICENSE']]) {
-        sh "cat $TOWER_LICENSE > files/$TOWER_LICENSE_FILE"
-      }
-
-    }
-
-    stage("build") {
-      timeout(50) {
-        sh "docker login -u='$DOCKER_USERNAME' -p='$DOCKER_PASSWORD'"
+      stage("build") {
         sh "docker build --pull -t '$IMAGE_TAG:$BUILD_NUMBER' ."
       }
-    }
+      stage("push") {
 
-    stage("push") {
-
-      if (env.BRANCH_NAME == "master") {
-        timeout(10) {
+        if (env.BRANCH_NAME == "master") {
           sh "docker tag '$IMAGE_TAG:$BUILD_NUMBER' '$IMAGE_TAG:latest'"
           sh "docker push '$IMAGE_TAG:latest'"
 
           sh "docker tag '$IMAGE_TAG:$BUILD_NUMBER' '$IMAGE_TAG:$VERSION'"
           sh "docker push '$IMAGE_TAG:$VERSION'"
-        }
-      } else {
+        } else {
 
-        def SANITIZED_BRANCH_NAME = "${sanitizedBranchName(BRANCH_NAME)}"
+          def SANITIZED_BRANCH_NAME = "${sanitizedBranchName(BRANCH_NAME)}"
 
-        timeout(10) {
           sh "docker tag '$IMAGE_TAG:$BUILD_NUMBER' '$IMAGE_TAG:$SANITIZED_BRANCH_NAME'"
           sh "docker push '$IMAGE_TAG:$SANITIZED_BRANCH_NAME'"
         }
+
       }
 
+      slackSend color: 'good', message: "Branch `$BRANCH_NAME` from repo `$REPO` has built successfully"
+
+    } catch (err) {
+
+      sh "echo $err"
+      currentBuild.result = 'FAILURE'
+
+      slackSend color: 'bad', message: "*$currentBuild.result*: Branch `$BRANCH_NAME` from repo `$REPO` has failed to build \n - *Link* \n ${BUILD_URL}console \n - *Error Message* ```$err```"
+
+    } finally {
+
+      /* Clean up workspace */
+      deleteDir()
+
     }
-
-    slackSend color: 'good', message: "Branch `$BRANCH_NAME` from repo `$REPO` has built successfully"
-
-  } catch (err) {
-
-    sh "echo $err"
-    currentBuild.result = 'FAILURE'
-
-    slackSend color: 'bad', message: "*$currentBuild.result*: Branch `$BRANCH_NAME` from repo `$REPO` has failed to build \n - *Link* \n ${BUILD_URL}console \n - *Error Message* ```$err```"
-
-  } finally {
-
-    /* Clean up workspace */
-    deleteDir()
-
   }
-
 }
 
 def sanitizedBranchName(branchName) {
