@@ -6,7 +6,7 @@ node {
 
     stage("variables setup") {
 
-      env.VERSION = "3.2.3"
+      env.VERSION = "3.2.3-ansible2.4.3.0"
       env.IMAGE_TAG = "korrd2/tower-in-a-box"
       env.REPO = "tower-in-a-box"
       env.TOWER_LICENSE_FILE = "license"
