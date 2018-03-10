@@ -34,15 +34,15 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C7A7DA52 \
     python2.7-dev \
     build-essential \
     curl \
-  && sh -c "echo 'deb https://apt.datadoghq.com/ stable main' > /etc/apt/sources.list.d/datadog.list" \
-  && apt-get update \
-  && apt-get install -y datadog-agent \
+  # && sh -c "echo 'deb https://apt.datadoghq.com/ stable main' > /etc/apt/sources.list.d/datadog.list" \
+  # && apt-get update \
+  # && apt-get install -y datadog-agent \
   && easy_install pip \
   && pip install ansible==2.3 certifi==2015.04.28 \
   && pip install datadog
 
 # Download [and extract] Tower
-RUN wget http://releases.ansible.com/awx/setup/ansible-tower-setup-${ANSIBLE_TOWER_VER}.tar.gz \
+RUN wget http://releases.ansible.com/ansible-tower/setup/ansible-tower-setup-${ANSIBLE_TOWER_VER}.tar.gz \
   && mkdir -p /opt/tower-setup/ansible-tower-setup-${ANSIBLE_TOWER_VER} \
   && tar -xvf ansible-tower-setup-${ANSIBLE_TOWER_VER}.tar.gz -C /opt/tower-setup \
   && rm -rf ansible-tower-setup-${ANSIBLE_TOWER_VER}.tar.gz \
