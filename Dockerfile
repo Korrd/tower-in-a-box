@@ -18,7 +18,7 @@ ENV LANG en_US.UTF-8
 
 # Add repos and install our stuff. There are things below that depend on `apt-transport-https`, hence we need
 # to do two passes.
-RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C7A7DA52 \
+RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 382E94DE \
   && apt-get update \
   && apt-get install -y \
     apt-transport-https \
@@ -34,9 +34,9 @@ RUN apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C7A7DA52 \
     python2.7-dev \
     build-essential \
     curl \
-  # && sh -c "echo 'deb https://apt.datadoghq.com/ stable main' > /etc/apt/sources.list.d/datadog.list" \
-  # && apt-get update \
-  # && apt-get install -y datadog-agent \
+  && sh -c "echo 'deb https://apt.datadoghq.com/ stable 6' > /etc/apt/sources.list.d/datadog.list" \
+  && apt-get update \
+  && apt-get install -y datadog-agent \
   && easy_install pip \
   && pip install ansible==2.3 certifi==2015.04.28 \
   && pip install datadog
