@@ -4,7 +4,7 @@ FROM ubuntu:16.04
 MAINTAINER victomartin@gmail.com
 
 # Set env vars and stuff
-ENV ANSIBLE_TOWER_VER=3.2.3
+ENV ANSIBLE_TOWER_VER=3.2.6
 
 # This var depends on ANSIBLE_TOWER_VER, so it needs to be on a different layer for it to work.
 ENV ANSIBLE_SETUP_SCRIPT=/opt/tower-setup/ansible-tower-setup-${ANSIBLE_TOWER_VER}/setup.sh
